@@ -1,0 +1,282 @@
+Program.Sub.ScreenSU.Start
+gui.F_UplFC..create
+gui.F_UplFC..caption("Forecast Upload")
+gui.F_UplFC..size(6525,2565)
+gui.F_UplFC..position(0,0)
+gui.F_UplFC..event(unload,unload)
+gui.F_UplFC..alwaysontop(False)
+gui.F_UplFC..fontname("Arial")
+gui.F_UplFC..fontsize(8)
+gui.F_UplFC..forecolor(0)
+gui.F_UplFC..fontstyle(,,,,)
+gui.F_UplFC..BackColor(-2147483633)
+gui.F_UplFC..controlbox(True)
+gui.F_UplFC..maxbutton(False)
+gui.F_UplFC..minbutton(True)
+gui.F_UplFC..mousepointer(0)
+gui.F_UplFC..moveable(True)
+gui.F_UplFC..sizeable(False)
+gui.F_UplFC..ShowInTaskBar(True)
+gui.F_UplFC..titlebar(True)
+gui.F_UplFC.lblFile.create(label,"Select File to Upload",True,1935,255,1,200,200,True,0,Arial,8,-2147483633,0)
+gui.F_UplFC.txtFile.create(textbox,"",True,5520,300,0,200,400,True,0,Arial,8,-2147483643,1)
+gui.F_UplFC.cmdFile.create(button)
+gui.F_UplFC.cmdFile.caption("^")
+gui.F_UplFC.cmdFile.visible(True)
+gui.F_UplFC.cmdFile.size(375,320)
+gui.F_UplFC.cmdFile.zorder(0)
+gui.F_UplFC.cmdFile.position(5800,400)
+gui.F_UplFC.cmdFile.enabled(True)
+gui.F_UplFC.cmdFile.fontname("Arial")
+gui.F_UplFC.cmdFile.fontsize(8)
+gui.F_UplFC.cmdFile.event(click,cmdfile_click)
+gui.F_UplFC.lblCustomer.create(label,"Customer",True,1935,255,1,200,800,True,0,Arial,8,-2147483633,0)
+gui.F_UplFC.txtCust.create(textbox,"",True,1335,300,0,200,1000,True,0,Arial,8,-2147483643,1)
+gui.F_UplFC.txtCust.maxLength(6)
+gui.F_UplFC.cmdCust.create(button)
+gui.F_UplFC.cmdCust.caption("^")
+gui.F_UplFC.cmdCust.visible(True)
+gui.F_UplFC.cmdCust.size(375,320)
+gui.F_UplFC.cmdCust.zorder(0)
+gui.F_UplFC.cmdCust.position(1600,1000)
+gui.F_UplFC.cmdCust.enabled(True)
+gui.F_UplFC.cmdCust.fontname("Arial")
+gui.F_UplFC.cmdCust.fontsize(8)
+gui.F_UplFC.cmdCust.event(click,cmdcust_click)
+gui.F_UplFC.cmdSubmit.create(button)
+gui.F_UplFC.cmdSubmit.caption("Submit")
+gui.F_UplFC.cmdSubmit.visible(True)
+gui.F_UplFC.cmdSubmit.size(855,375)
+gui.F_UplFC.cmdSubmit.zorder(0)
+gui.F_UplFC.cmdSubmit.position(200,1500)
+gui.F_UplFC.cmdSubmit.enabled(True)
+gui.F_UplFC.cmdSubmit.fontname("Arial")
+gui.F_UplFC.cmdSubmit.fontsize(8)
+gui.F_UplFC.cmdSubmit.event(click,cmdsubmit_click)
+gui.F_UplFC.txtFile.tabstop(True)
+gui.F_UplFC.txtFile.tabindex(1)
+gui.F_UplFC.cmdFile.tabstop(True)
+gui.F_UplFC.cmdFile.tabindex(2)
+gui.F_UplFC.txtCust.tabstop(True)
+gui.F_UplFC.txtCust.tabindex(3)
+gui.F_UplFC.cmdCust.tabstop(True)
+gui.F_UplFC.cmdCust.tabindex(4)
+gui.F_UplFC.cmdSubmit.tabstop(True)
+gui.F_UplFC.cmdSubmit.tabindex(5)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+
+F.ODBC.Connection!Con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+Gui.F_UplFC.txtCust.Locked(True)
+Gui.F_UplFC..Show
+
+
+Program.Sub.Main.End
+
+program.sub.cmdfile_click.start
+'Browse for the .xls file
+V.Local.sFile.Declare(String)
+
+F.Intrinsic.UI.ShowOpenFileDialog("",".xls","C:\",V.local.sFile)
+
+F.Intrinsic.Control.If(V.Local.sFile,<>,"***CANCEL***")
+	Gui.F_UplFC.txtFile.Text(V.Local.sFile)
+F.Intrinsic.Control.EndIf
+
+
+program.sub.cmdfile_click.end
+
+program.sub.cmdsubmit_click.start
+V.Local.sError.Declare(String)
+V.Local.bRet.Declare
+V.Local.sFile.Declare
+V.Local.sType.Declare
+V.Local.sXls.Declare
+
+F.Intrinsic.Control.SetErrorHandler("cmdsubmit_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sFile.Set(V.Screen.F_UplFC!txtFile.Text)
+
+'Check File Type
+F.Intrinsic.File.GetExtensionComponent(V.Local.sFile.Trim,V.Local.sType)
+F.Intrinsic.Control.If(V.Local.sType,<>,"xls")
+	F.Intrinsic.UI.Msgbox("Select .xls file")
+	F.Intrinsic.Control.exitsub
+F.Intrinsic.Control.EndIf
+
+'Check for MSExcel or OOGeneral
+F.Automation.MSExcel.CheckPresence(V.Local.bRet)
+F.Intrinsic.Control.If(V.Local.bRet,=,True)
+	F.Automation.MSExcel.ReadSpreadsheet(V.Local.sFile.Trim,54,500,V.Local.sXls)
+F.Intrinsic.Control.Else
+	F.Automation.OOGeneral.CheckPresence(V.Local.bRet)
+	F.Intrinsic.Control.If(V.Local.bRet,=,True)
+		F.Automation.OOCalc.ReadSpreadsheet(V.Local.sfile.Trim,1,54,500,V.Local.sXls)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.UI.Msgbox("Microsoft Excel or OOCalc required to execute .xls import")
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.CallSub(Fc_file,"sXls",V.Local.sXls)
+
+F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Label("cmdsubmit_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: ATG_3806_UPLFC.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+program.sub.cmdsubmit_click.end
+
+program.sub.cmdcust_click.start
+F.Intrinsic.Control.SetErrorHandler("cmdcust_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sRet.Declare
+
+'Browse for the customer
+F.Intrinsic.UI.CommonBrowser(205,"",V.Local.sRet)
+F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+	F.Intrinsic.string.Split(V.Local.sRet,"*!*",V.Local.sRet)
+	Gui.F_UplFC.txtCust.Text(V.Local.sRet(0))
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdcust_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: ATG_3806_UPLFC.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.cmdcust_click.end
+
+program.sub.unload.start
+
+F.ODBC.Connection!Con.Close
+F.Intrinsic.Control.End
+
+program.sub.unload.end
+
+Program.Sub.FC_File.Start
+V.Local.sError.Declare(String)
+V.Local.iCt.Declare
+V.Local.iCol.Declare
+V.Local.iRow.Declare
+V.Local.iTotal.declare
+V.Local.sCol.Declare
+V.Local.sCust.Declare
+V.Local.sDate.Declare
+V.Local.sFCData.Declare
+V.Local.sFile.Declare
+V.Local.sFilepath.Declare
+V.Local.sHeader.Declare
+V.Local.sLine.Declare
+V.Local.sLoc.Declare
+V.Local.sMsg.Declare
+V.Local.sPart.Declare
+V.Local.sRev.Declare
+V.Local.sRow.Declare
+V.Local.sSql.Declare
+V.Local.sXls.Declare
+
+F.Intrinsic.Control.SetErrorHandler("FC_File_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sCust.Set(V.Screen.F_UplFC!txtCust.Text)
+'Split XLS
+F.Intrinsic.String.Split(V.Args.sXls,"&^&",V.Local.sXls)
+F.Intrinsic.Control.For(V.Local.iCt,0,V.Local.sXls.UBound,1)
+	F.Intrinsic.String.Split(V.Local.sXls(v.Local.iCt),"$!$",V.Local.sRow)
+	F.Intrinsic.String.Split(V.Local.sRow(0),"*!*",V.Local.sDate)
+	F.Intrinsic.Control.For(V.Local.iRow,1,V.Local.sRow.UBound,1)
+		F.Intrinsic.String.Split(V.Local.sRow(v.Local.iRow),"*!*",V.Local.sCol)
+		F.Intrinsic.Control.If(V.Local.sCol(0).Trim,<>,"")
+			V.Local.iTotal.Set(0)
+			F.Intrinsic.Control.For(V.Local.iCol,2,53,1)
+				'Line
+				'"L", Date, Qty, Type
+				F.Intrinsic.Control.If(V.Local.iCol,=,2)
+					F.Intrinsic.String.Concat("L",V.Ambient.Tab,V.Local.sDate(v.Local.iCol).Format*.MM/DD/YYYY,V.Ambient.Tab,V.Local.sCol(v.Local.iCol),V.Ambient.Tab,"2",V.Local.sLine)
+				F.Intrinsic.Control.Else
+					F.Intrinsic.String.Concat(V.Local.sLine,V.Ambient.NewLine,"L",V.Ambient.Tab,V.Local.sDate(v.Local.iCol).Format*.MM/DD/YYYY,V.Ambient.Tab,V.Local.sCol(v.Local.iCol),V.Ambient.Tab,"2",V.Local.sLine)
+				F.Intrinsic.Control.EndIf
+				F.Intrinsic.Math.Add(V.Local.iTotal,V.Local.sCol(v.Local.iCol),V.Local.iTotal)
+			F.Intrinsic.Control.Next(V.Local.iCol)
+			'Header
+			'Type-"H", Cust, Ship to
+			F.Intrinsic.String.Concat("H",V.Ambient.Tab,V.Local.sCust.Trim,V.Ambient.Tab,V.Ambient.Tab,V.Local.sHeader)
+			'Part, Rev, Loc
+			F.Intrinsic.String.Concat("select * from INV_CROSS_REF where RTrim(part)='",V.Local.sCol(0),"'",V.Local.sSql)
+			F.ODBC.Connection!Con.OpenLocalRecordsetRO("rst",V.Local.sSql)
+			F.Intrinsic.Control.If(V.ODBC.Con!rst.EOF,=,False)
+				V.Local.sPart.Set(V.ODBC.Con!rst.FieldVal!Customer_Part)
+				V.Local.sLoc.Set(V.ODBC.Con!rst.FieldVal!Location)
+			F.Intrinsic.Control.EndIf
+			F.ODBC.Con!rst.Close
+			F.Intrinsic.String.Mid(V.Local.sPart,18,3,V.Local.sRev)
+			F.Intrinsic.String.Left(V.Local.sPart,17,V.Local.sPart)
+			F.Intrinsic.String.Concat(V.Local.sHeader,V.Ambient.Tab,V.Local.sPart,V.Ambient.Tab,V.Local.sRev,V.Ambient.Tab,V.Local.sLoc,V.Local.sHeader)
+			'Cust Part, Desc,
+			F.Intrinsic.String.Concat(V.Local.sHeader,V.Ambient.Tab,V.Local.sCol(0),V.Ambient.Tab,V.Local.sCol(1),V.Local.sHeader)
+			'Start date, Inv Source, Doc #, Quantity
+			F.Intrinsic.string.Concat(V.Local.sHeader,V.Ambient.Tab,V.Local.sDate(2).Format*.MM/DD/YYYY,V.Ambient.Tab,"P",V.Ambient.Tab,V.Ambient.Tab,V.Local.iTotal,V.Local.sHeader)
+			'Gen Detail, # of Buckets. Interval days, Days to Consume, 2nd day, 3rd day
+			F.Intrinsic.string.Concat(V.Local.sHeader,V.Ambient.Tab,"N",V.Ambient.Tab,"0",V.Ambient.Tab,"0",V.Ambient.Tab,"0",V.Ambient.Tab,"0",V.Ambient.Tab,"0",V.Local.sHeader)
+			'User1, User2, Comment, Import Source
+			F.Intrinsic.string.Concat(V.Local.sHeader,V.Ambient.Tab,V.Ambient.Tab,V.Ambient.Tab,V.Ambient.Tab,"I",V.Local.sHeader)
+
+			'Concat Header and lines
+			F.Intrinsic.Control.If(V.Local.sFCData.Trim,=,"")
+				F.Intrinsic.String.Concat(V.Local.sHeader,V.Ambient.NewLine,V.Local.sLine,V.Local.sFCData)
+			F.Intrinsic.Control.Else
+				F.Intrinsic.String.Concat(V.Local.sFCData,V.Ambient.NewLine,V.Local.sHeader,V.Local.sHeader,V.Ambient.NewLine,V.Local.sLine,V.Local.sFCData)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Next(V.Local.iRow)
+F.Intrinsic.Control.Next(V.Local.iCt)
+
+f.Intrinsic.String.Concat("FC",v.Ambient.Now.Format*.MMDDYYYYhhmmss,v.Local.sFile)
+F.Intrinsic.String.Concat(V.Caller.FilesDir,"\",V.Local.sFile,V.Local.sFilepath)
+F.Intrinsic.File.String2File(V.Local.sFilepath,V.Local.sFCData)
+F.Intrinsic.String.Concat("Forecast File "",V.Local.sFile,"" is saved in ",V.Caller.FilesDir,V.Local.sMsg)
+F.Intrinsic.UI.Msgbox(V.Local.sMsg)
+
+'Call FC
+F.Global.General.CallWrapperAsync(50,"FC0005")
+
+Gui.F_UplFC.txtCust.Text("")
+Gui.F_UplFC.txtFile.Text("")
+
+F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Label("FC_File_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: ATG_3806_UPLFC.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.FC_File.End
+
+Program.Sub.Comments.Start
+${$0$}$ATG_UPLFC.$}$CHANDANA$}$4/13/2012
+${$3$}$0$}$$}$-1$}$-1$}$$}$1/1/1900$}$Quote Number 3553
+Revision Number 0
+Customer Name Miller Welding & Machine Co.
+Reference Number MIL125-32620121439-7
+Line 0
+Title JLG Forecast Upload
+
+Program.Sub.Comments.End
+
